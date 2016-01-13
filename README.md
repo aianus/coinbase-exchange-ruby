@@ -1,5 +1,17 @@
 # Coinbase Exchange Gem
 
+*Note: this library may be subtly broken or buggy. The code is released under
+the MIT License – please take the following message to heart:*
+
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+*
+
 ## REST Client
 
 We provide an exchange client that is a thin wrapper over the exchange API.  The purpose of this Readme is to provide context for using the gem effectively.  For a detailed overview of the information that's available through the API, we recommend consulting the official documentation.
@@ -443,4 +455,37 @@ websocket.match do |resp|
   p "Spot Rate: £ %.2f" % resp.price
 end
 websocket.start!
+```
+
+## LiveOrderbook
+
+`LiveOrderbook` creates a local mirror of the orderbook on Coinbase Exchange using
+the rest client and websocket client as described [here](https://docs.exchange.coinbase.com/#real-time-order-book).
+
+```ruby
+  include Coinbase::Exchange
+
+  @rest_client = Coinbase::Exchange::Client.new(ENV['COINBASE_EXCHANGE_API_KEY'],
+                                                ENV['COINBASE_EXCHANGE_API_SECRET'],
+                                                ENV['COINBASE_EXCHANGE_API_PASSPHRASE'],
+                                                product_id: 'BTC-USD')
+
+  @websocket = Coinbase::Exchange::Websocket.new(product_id: 'BTC-USD',
+                                                 keepalive: true)
+
+  @book = LiveOrderbook.new('BTC-USD', @rest_client, @websocket)
+
+  # LiveOrderbook must be started inside the reactor loop
+  EM.run do
+    @book.on_ready do
+      puts "Orderbook loaded, best bid is #{@book.bids.first[Orderbook::PRICE]}"
+    end
+
+    @book.on_close do |msg|
+      puts "An order was closed, best bid is now #{@book.bids.first[Orderbook::PRICE]}"
+    end
+
+    @book.start!
+  end
+end
 ```

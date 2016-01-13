@@ -13,6 +13,8 @@ require "coinbase/exchange/adapters/net_http.rb"
 require "coinbase/exchange/adapters/em_http.rb"
 require "coinbase/exchange/client"
 require "coinbase/exchange/websocket"
+require "coinbase/exchange/orderbook"
+require "coinbase/exchange/live_orderbook"
 
 module Coinbase
   # Coinbase Exchange module
